@@ -1,11 +1,15 @@
 package pl.aga.todolist.todolist.checklist.service;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface CheckListRepository {
     void save(CheckList checkList);
-    void delete(UUID id);
+    void delete(UUID id) ;
     Optional<CheckList> find(UUID id);
-    Optional<Task> findTask(CheckList checkList, UUID idTask);
+    List<CheckList> loadCheckList();
+
 }

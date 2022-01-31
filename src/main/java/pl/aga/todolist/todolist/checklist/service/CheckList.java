@@ -14,6 +14,12 @@ public class CheckList {
         this.id = id;
     }
 
+    public CheckList(String name, UUID id, List<Task> tasks) {
+        this.name = name;
+        this.id = id;
+        this.tasks = tasks;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -26,11 +32,32 @@ public class CheckList {
         tasks.add(task);
     }
 
-    public void deleteTask(Task task){
+    public void deleteTask(Task task) {
         tasks.remove(task);
     }
 
     public List<Task> getAllTasks() {
         return tasks;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name)
+                .append(",")
+                .append(id);
+        if (tasks.size() > 0) {
+            sb.append("\n");
+            for (Task t : tasks) {
+                sb.append(t.getName())
+                        .append(",")
+                        .append(t.getExecute())
+                        .append(",")
+                        .append(t.getIdTask())
+                        .append("\n");
+            }
+        }
+        return sb.toString().trim();
+
     }
 }
