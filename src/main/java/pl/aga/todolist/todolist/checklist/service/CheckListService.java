@@ -20,7 +20,7 @@ public class CheckListService {
 
     public void create(String name) {
         CheckList checkList = new CheckList(name, UUID.randomUUID());
-        repo.save(checkList);
+        repo.save(checkList,true);
     }
     public void delete(UUID id) throws IOException {
         repo.delete(id);

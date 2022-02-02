@@ -21,7 +21,7 @@ public class FileRepository implements CheckListRepository {
 
 
     @Override
-    public void save(CheckList checkList) {
+    public void save(CheckList checkList, boolean createChecklist) {
         Path file = Paths.get(mainDir + checkList.getId() + ".txt");
         try {
             Files.writeString(file, checkList.toString(),StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);

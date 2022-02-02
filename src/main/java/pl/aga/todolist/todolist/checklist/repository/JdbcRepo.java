@@ -16,31 +16,31 @@ import java.util.UUID;
 @Repository("jdbcRepo")
 public class JdbcRepo implements CheckListRepository {
     private DataSource dataSource;
-    private Connection con ;
 
-    public JdbcRepo(@Autowired  DataSource dataSource) {
-        try {
-//            Class.forName("com.mysql.cj.jdbc.Driver");
-//                con = DriverManager.getConnection("jdbc:mysql://localhost:3306/todolist", "root", "agnieszka");
-            con = dataSource.getConnection();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+    public JdbcRepo(@Autowired DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
-    public void save(CheckList checkList) {
-        try {
-            String command1 = "INSERT INTO checklists (id_checklist,name_checklist) values (?,?)";
-            PreparedStatement stat = con.prepareStatement(command1);
-            stat.setString(1, checkList.getId().toString());
-            stat.setString(2, checkList.getName());
-            stat.executeUpdate();
+    public void save(CheckList checkList, boolean createChecklist) {
+        try (Connection con = dataSource.getConnection()) {
 
-            List<Task> tasks = checkList.getAllTasks();
+            if (createChecklist == true) {
+                String command1 = "INSERT INTO checklists (id_checklist,name_checklist) values (?,?)";
+                PreparedStatement stat = con.prepareStatement(command1);
+                stat.setString(1, checkList.getId().toString());
+                stat.setString(2, checkList.getName());
+                stat.executeUpdate();
+            }
+
+            PreparedStatement deleteAllTaskStat = con.prepareStatement("DELETE FROM TASKS WHERE id_checklist = ?");
+            deleteAllTaskStat.setString(1,checkList.getId().toString());
+            deleteAllTaskStat.executeUpdate();
+
             PreparedStatement taskStat = con.prepareStatement("INSERT INTO tasks (id_task,execute,name_task,id_checklist) " +
                     "Values (?,?,?,?)");
+
+            List<Task> tasks = checkList.getAllTasks();
 
             for (Task task : tasks) {
                 taskStat.setString(1, task.getIdTask().toString());
@@ -57,9 +57,20 @@ public class JdbcRepo implements CheckListRepository {
     @Override
     public void delete(UUID id) {
         String command = "DELETE FROM checklists WHERE id_checklist LIKE ?";
-        try (PreparedStatement stat = con.prepareStatement(command)) {
+        try (
+                Connection con = dataSource.getConnection();
+        ) {
+
+            PreparedStatement deleteAllTaskStat = con.prepareStatement("DELETE FROM TASKS WHERE id_checklist = ?");
+            deleteAllTaskStat.setString(1,id.toString());
+            deleteAllTaskStat.executeUpdate();
+            deleteAllTaskStat.close();
+
+            PreparedStatement stat = con.prepareStatement(command);
             stat.setString(1, id.toString());
             stat.executeUpdate();
+            stat.close();
+
         } catch (SQLException e) {
             throw new IllegalArgumentException(e);
         }
@@ -68,9 +79,9 @@ public class JdbcRepo implements CheckListRepository {
     @Override
     public Optional<CheckList> find(UUID id) {
         CheckList checkList = findChecklistById(id);
-        if(checkList !=null){
+        if (checkList != null) {
             List<Task> tasks = loadTasks(checkList.getId());
-            checkList = new CheckList(checkList.getName(),checkList.getId(),tasks);
+            checkList = new CheckList(checkList.getName(), checkList.getId(), tasks);
         }
 
         return Optional.ofNullable(checkList);
@@ -82,12 +93,15 @@ public class JdbcRepo implements CheckListRepository {
         String command1 = "SELECT id_checklist, name_checklist FROM checklists WHERE id_checklist = ? ";
         ResultSet result = null;
 
-        try (PreparedStatement stat = con.prepareStatement(command1)) {
+        try (
+                Connection con = dataSource.getConnection();
+                PreparedStatement stat = con.prepareStatement(command1)
+        ) {
 
             stat.setString(1, idChecklist.toString());
             result = stat.executeQuery();
-            if (result.getFetchSize() > 0) {
-                result.next();
+            if (result.next()) {
+
                 String nameChecklist = result.getString("name_checklist");
                 checkList = new CheckList(nameChecklist, idChecklist);
             }
@@ -103,7 +117,10 @@ public class JdbcRepo implements CheckListRepository {
                 "FROM tasks WHERE id_checklist = ? ";
         ResultSet resultTask = null;
         List<Task> tasks = new ArrayList<>();
-        try (PreparedStatement statement = con.prepareStatement(command2)) {
+        try (
+                Connection con = dataSource.getConnection();
+                PreparedStatement statement = con.prepareStatement(command2)
+        ) {
 
             statement.setString(1, idChecklist.toString());
             resultTask = statement.executeQuery();
@@ -128,9 +145,10 @@ public class JdbcRepo implements CheckListRepository {
 
         String command1 = "SELECT id_checklist, name_checklist FROM checklists";
         ResultSet result = null;
-        try {
-            Connection con = dataSource.getConnection();
+
+        try (Connection con = dataSource.getConnection()) {
             result = con.createStatement().executeQuery(command1);
+
             while (result.next()) {
                 UUID idChecklist = UUID.fromString(result.getString(1));
                 String nameChecklist = result.getString(2);

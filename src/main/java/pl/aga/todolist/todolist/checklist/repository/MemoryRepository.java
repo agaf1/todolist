@@ -15,7 +15,7 @@ public class MemoryRepository implements CheckListRepository {
     private List<CheckList> checklists = new ArrayList<>();
 
     @Override
-    public void save(CheckList checkList) {
+    public void save(CheckList checkList, boolean createChecklist) {
         if(!checklists.contains(checkList)){
             checklists.add(checkList);
         }

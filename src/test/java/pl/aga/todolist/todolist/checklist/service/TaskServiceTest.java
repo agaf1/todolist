@@ -2,116 +2,110 @@ package pl.aga.todolist.todolist.checklist.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import pl.aga.todolist.todolist.checklist.repository.FileRepository;
+import pl.aga.todolist.todolist.checklist.repository.JdbcRepo;
 import pl.aga.todolist.todolist.checklist.repository.MemoryRepository;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class TaskServiceTest {
-    private MemoryRepository repository;
-    private FileRepository fileRepository;
-    private TaskService serviceTask ;
-    private TaskService fileServiceTask;
-    private CheckListService service;
-    private CheckListService fileService;
+
+    @Autowired
+    DataSource dataSource;
+
+    private TaskService taskService;
+    private CheckListService checkListService;
 
     @BeforeEach
-    public void setup() throws IOException {
-        repository = new MemoryRepository();
-        fileRepository = new FileRepository("c:/_CheckList/");
-        serviceTask  = new TaskService(repository);
-        fileServiceTask = new TaskService(fileRepository);
-        service = new CheckListService(repository);
-        fileService = new CheckListService(fileRepository);
+    public void setup() {
+              JdbcRepo repo = new JdbcRepo(dataSource);
+        //        FileRepository repo = new FileRepository("c:/_CheckList/");
+        //      qMemoryRepository repo = new MemoryRepository();
 
-        service.create("test");
-        fileService.create("test");
+        taskService = new TaskService(repo);
+        checkListService = new CheckListService(repo);
+        checkListService.create("test");
     }
 
     @Test
-    public void shouldAddTask(){
-        List<CheckList> cL = repository.loadCheckList();
-        CheckList l = cL.get(0);
+    public void shouldAddTask() {
+        List<CheckList> cL = checkListService.getAll();
+        CheckList list = cL.get(0);
 
-        serviceTask.addTask(l.getId(),"read book");
+        taskService.addTask(list.getId(), "read book");
 
-        assertEquals(1,l.getAllTasks().size() );
+        Optional<CheckList> resultList = checkListService.getAll().
+                stream().
+                filter(c -> c.getId().equals(list.getId())).
+                findAny();
+
+        Optional<Task> resultTask = resultList.map(c -> c.getAllTasks()).orElseGet(Collections::emptyList).
+                stream().filter(t -> t.getName().equals("read book")).findAny();
+
+        assertTrue(resultList.isPresent());
     }
 
     @Test
-    public void shouldAddTaskToFile() throws IOException {
-        List<Path> paths = Files.list(Path.of("c:/_CheckList/")).toList();
-        List<String> strings = Files.readAllLines(paths.get(0));
-        String[] attributeChecklist = strings.get(0).split(",");
-        String string = attributeChecklist[1];
-        UUID id = UUID.fromString(string);
-        fileServiceTask.addTask( id, "book");
+    public void shouldDeleteTask() {
 
-        List<Path> paths1 = Files.list(Path.of("c:/_CheckList/")).toList();
-        List<String> strings1 = Files.readAllLines(paths1.get(0));
+        List<CheckList> checkLists = checkListService.getAll();
+        UUID idCheckList = checkLists.get(0).getId();
 
-        assertEquals(2,strings1.size());
+        taskService.addTask(idCheckList, "read book");
+
+        Optional<Task> newTask = findTask(idCheckList,(task)->"read book".equals(task.getName()));
+
+        UUID idNewTask = newTask.get().getIdTask();
+
+        taskService.deleteTask(idCheckList, idNewTask);
+
+        Optional<Task> resultTask = findTask(idCheckList,(task)->idNewTask.equals(task.getIdTask()));
+
+        assertTrue(resultTask.isEmpty());
     }
 
-    @Test
-    public void shouldDeleteTask(){
-        List<CheckList> cL = repository.loadCheckList();
-        CheckList l = cL.get(0);
+    private Optional<Task> findTask(UUID idCheckList, Predicate<Task> findTaskPredicate){
+        Optional<CheckList> checkList = checkListService.getAll()
+                .stream()
+                .filter(c -> idCheckList.equals(c.getId()))
+                .findAny();
 
-        serviceTask.addTask(l.getId(),"read book");
-        List<Task> ta = l.getAllTasks();
-        Task t = ta.get(0);
-        serviceTask.deleteTask(l.getId(),t.getIdTask());
-
-        assertEquals(0,l.getAllTasks().size());
+        Optional<Task> task = checkList.map(c -> c.getAllTasks()).orElseGet(Collections::emptyList)
+                .stream()
+                .filter(findTaskPredicate)
+                .findAny();
+        return task;
     }
-
-    @Test
-    public void shouldDeleteTaskFromFile() throws IOException {
-        List<Path> paths = Files.list(Path.of("c:/_CheckList/")).toList();
-        List<String> strings = Files.readAllLines(paths.get(0));
-        String[] attributeChecklist = strings.get(0).split(",");
-        String string = attributeChecklist[1];
-        UUID id = UUID.fromString(string);
-        fileServiceTask.addTask( id, "book");
-
-        List<String> strings1 = Files.readAllLines(paths.get(0));
-        String[] attributeTask = strings1.get(1).split(",");
-        String string1 = attributeTask[2];
-        UUID id1 = UUID.fromString(string1);
-
-        assertEquals(2,strings1.size());
-
-        fileServiceTask.deleteTask(id,id1);
-
-        List<Path> paths1 = Files.list(Path.of("c:/_CheckList/")).toList();
-        List<String> strings2 = Files.readAllLines(paths1.get(0));
-
-
-        assertEquals(1,strings2.size());
-
-    }
-
-    @Test
-    public void shouldChangeExecuteToTrue(){
-
-        List<CheckList> cL = repository.loadCheckList();
-        CheckList checkList = cL.get(0);
-
-        serviceTask.addTask(checkList.getId(),"read book");
-        List<Task> tasks = checkList.getAllTasks();
-        Task task = tasks.get(0);
-
-        assertEquals(false,task.getExecute());
-
-        serviceTask.changeState(checkList.getId(),task.getIdTask());
-
-        assertEquals(true,task.getExecute());
-    }
+//
+//
+//
+//    @Test
+//    public void shouldChangeExecuteToTrue(){
+//
+//        List<CheckList> cL = repository.loadCheckList();
+//        CheckList checkList = cL.get(0);
+//
+//        serviceTask.addTask(checkList.getId(),"read book");
+//        List<Task> tasks = checkList.getAllTasks();
+//        Task task = tasks.get(0);
+//
+//        assertEquals(false,task.getExecute());
+//
+//        serviceTask.changeState(checkList.getId(),task.getIdTask());
+//
+//        assertEquals(true,task.getExecute());
+//    }
 }

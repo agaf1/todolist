@@ -24,14 +24,14 @@ class FileRepositoryTest {
     public void shouldCreateNewFile() {
         FileRepository repo = new FileRepository("c:/_CheckList/");
         CheckList checkList = new CheckList("dom", UUID.randomUUID());
-        repo.save(checkList);
+        repo.save(checkList, true);
     }
 
     @Test
     public void shouldDeleteFile() {
         FileRepository repo = new FileRepository("c:/_CheckList/");
         CheckList checkList = new CheckList("dom", UUID.randomUUID());
-        repo.save(checkList);
+        repo.save(checkList,true);
         Path path = Paths.get("c:/_CheckList/" + checkList.getId() + ".txt");
         assertTrue(Files.exists(path));
 
@@ -43,9 +43,9 @@ class FileRepositoryTest {
     public void shouldFindCheckList() {
         FileRepository repo = new FileRepository("c:/_CheckList/");
         CheckList checkList = new CheckList("dom", UUID.randomUUID());
-        repo.save(checkList);
+        repo.save(checkList, true);
         CheckList checkList1 = new CheckList("garaz", UUID.randomUUID());
-        repo.save(checkList1);
+        repo.save(checkList1,true);
 
         CheckList foundedList = repo.find(checkList.getId()).orElse(null);
 
@@ -57,7 +57,7 @@ class FileRepositoryTest {
         FileRepository repo = new FileRepository("c:/_CheckList/");
         TaskService t = new TaskService(repo);
         CheckList checkList = new CheckList("dom", UUID.randomUUID());
-        repo.save(checkList);
+        repo.save(checkList,true);
 
         t.addTask(checkList.getId(), "ala");
         t.addTask(checkList.getId(), "beta");
