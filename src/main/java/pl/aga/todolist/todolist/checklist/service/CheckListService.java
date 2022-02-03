@@ -4,8 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,7 +20,7 @@ public class CheckListService {
         CheckList checkList = new CheckList(name, UUID.randomUUID());
         repo.save(checkList,true);
     }
-    public void delete(UUID id) throws IOException {
+    public void delete(UUID id){
         repo.delete(id);
     }
     public List<CheckList> getAll(){

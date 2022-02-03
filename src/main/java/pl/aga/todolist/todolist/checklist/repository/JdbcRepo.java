@@ -58,7 +58,7 @@ public class JdbcRepo implements CheckListRepository {
     public void delete(UUID id) {
         String command = "DELETE FROM checklists WHERE id_checklist LIKE ?";
         try (
-                Connection con = dataSource.getConnection();
+                Connection con = dataSource.getConnection()
         ) {
 
             PreparedStatement deleteAllTaskStat = con.prepareStatement("DELETE FROM TASKS WHERE id_checklist = ?");
@@ -91,7 +91,7 @@ public class JdbcRepo implements CheckListRepository {
         CheckList checkList = null;
 
         String command1 = "SELECT id_checklist, name_checklist FROM checklists WHERE id_checklist = ? ";
-        ResultSet result = null;
+        ResultSet result;
 
         try (
                 Connection con = dataSource.getConnection();
@@ -115,7 +115,7 @@ public class JdbcRepo implements CheckListRepository {
 
         String command2 = "SELECT id_task, execute, name_task, id_checklist " +
                 "FROM tasks WHERE id_checklist = ? ";
-        ResultSet resultTask = null;
+        ResultSet resultTask;
         List<Task> tasks = new ArrayList<>();
         try (
                 Connection con = dataSource.getConnection();
@@ -144,7 +144,7 @@ public class JdbcRepo implements CheckListRepository {
         List<CheckList> checklists = new ArrayList<>();
 
         String command1 = "SELECT id_checklist, name_checklist FROM checklists";
-        ResultSet result = null;
+        ResultSet result;
 
         try (Connection con = dataSource.getConnection()) {
             result = con.createStatement().executeQuery(command1);

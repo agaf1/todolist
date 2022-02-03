@@ -3,7 +3,6 @@ package pl.aga.todolist.todolist.checklist.repository;
 import org.springframework.stereotype.Repository;
 import pl.aga.todolist.todolist.checklist.service.CheckList;
 import pl.aga.todolist.todolist.checklist.service.CheckListRepository;
-import pl.aga.todolist.todolist.checklist.service.Task;
 
 import java.util.ArrayList;
 import java.util.List;

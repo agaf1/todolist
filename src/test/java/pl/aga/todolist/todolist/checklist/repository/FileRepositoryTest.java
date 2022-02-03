@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -63,4 +64,13 @@ class FileRepositoryTest {
         t.addTask(checkList.getId(), "beta");
 
         }
+    @Test
+    public void shouldLoadChecklist(){
+        FileRepository repo = new FileRepository("c:/_CheckList/");
+
+        repo.loadCheckList();
+        Optional<CheckList> result = repo.find(UUID.fromString("654ac1ca-955f-4197-b544-bac63f37db25"));
+        assertTrue(result.isPresent());
+    }
+
 }

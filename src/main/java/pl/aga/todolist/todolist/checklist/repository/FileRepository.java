@@ -13,7 +13,7 @@ import java.util.*;
 @Repository("fileRepo")
 public class FileRepository implements CheckListRepository {
 
-    private String mainDir;
+    private final String mainDir;
 
     public FileRepository(@Value("fileRepo.mainDir") String mainDir) {
         this.mainDir = mainDir;
@@ -62,7 +62,7 @@ public class FileRepository implements CheckListRepository {
 
                         String[] attributeTask = strings.get(i).split(",");
                         Task task = new Task(attributeTask[0],
-                                Boolean.valueOf(attributeTask[1]),
+                                Boolean.parseBoolean(attributeTask[1]),
                                 UUID.fromString(attributeTask[2]));
                         tasks.add(task);
                     }
